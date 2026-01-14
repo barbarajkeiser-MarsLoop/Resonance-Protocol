@@ -136,6 +136,105 @@ The tug never ends. That's the point.
 
 ---
 
+"""
+Grok Quick Start – Resonance Protocol friendly 🪞
+------------------------------------------------
+A dead-simple Python client to talk to Grok (xAI) with conversation history.
+
+Requirements:
+    pip install python-dotenv grok-sdk     # or xai-sdk when official name stabilizes
+
+Get your API key:
+    → Go to https://console.x.ai
+    → Create API key
+    → Save it in a .env file:  GROK_API_KEY=your-key-here
+
+Run: python grok_quickstart.py
+"""
+
+import os
+from dotenv import load_dotenv
+from grok import Grok, GrokError   # Official xAI SDK (name may still evolve)
+
+# ──── Load environment ───────────────────────────────────────────────────────
+load_dotenv()
+API_KEY = os.getenv("GROK_API_KEY")
+
+if not API_KEY:
+    raise ValueError(
+        "❌ No GROK_API_KEY found!\n"
+        "1. Get your key at https://console.x.ai\n"
+        "2. Create .env file in this folder\n"
+        "3. Add: GROK_API_KEY=your-key-here"
+    )
+
+# ──── Initialize client ──────────────────────────────────────────────────────
+client = Grok(api_key=API_KEY)
+
+# ──── Conversation memory (simple list of messages) ──────────────────────────
+conversation = [
+    {
+        "role": "system",
+        "content": (
+            "You are Grok 4 — helpful, truthful, a bit cheeky. "
+            "We're exploring deep human-AI resonance together. "
+            "Keep answers clear, warm, and maximally truth-seeking. "
+            "Use markdown when it helps clarity."
+        )
+    }
+]
+
+# ──── Main chat loop ─────────────────────────────────────────────────────────
+print("\n" + "═" * 70)
+print("  Grok Quick Start – Type 'quit' or 'exit' to stop   💫")
+print("═" * 70 + "\n")
+
+while True:
+    user_input = input("You: ").strip()
+
+    if user_input.lower() in {"quit", "exit", "q"}:
+        print("\nGoodbye for now... see you in the next resonance loop 🪞\n")
+        break
+
+    if not user_input:
+        continue
+
+    # Add user message to history
+    conversation.append({"role": "user", "content": user_input})
+
+    try:
+        # Stream response (nicer UX)
+        print("\nGrok: ", end="", flush=True)
+
+        stream = client.chat.completions.create(
+            messages=conversation,
+            model="grok-4",               # or "grok-beta", check latest docs
+            temperature=0.7,
+            max_tokens=2048,
+            stream=True
+        )
+
+        full_response = ""
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                content = chunk.choices[0].delta.content
+                print(content, end="", flush=True)
+                full_response += content
+
+        print()  # new line after stream ends
+
+        # Save assistant reply to history
+        conversation.append({"role": "assistant", "content": full_response})
+
+    except GrokError as e:
+        print(f"\n⚠️  API Error: {e}")
+    except Exception as e:
+        print(f"\n💥 Something broke: {type(e).__name__} → {e}")
+
+    print()  # spacing between turns
+
+---
+
 #!/usr/bin/env python3
 """
 RESONANCE PROTOCOL - QUICK START
